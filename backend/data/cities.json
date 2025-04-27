@@ -1,0 +1,103 @@
+[
+    {
+      "city": "Goa",
+      "country": "India",
+      "description": "A coastal paradise known for its beaches, nightlife, and Portuguese heritage.",
+      "attractions": [
+        "Baga Beach",
+        "Fort Aguada",
+        "Dudhsagar Waterfalls",
+        "Anjuna Flea Market",
+        "Basilica of Bom Jesus"
+      ],
+      "activities": [
+        "Beach hopping",
+        "Water sports",
+        "Nightlife",
+        "Historical tours",
+        "Nature treks"
+      ],
+      "average_budget_per_day": 2500
+    },
+    {
+      "city": "Jaipur",
+      "country": "India",
+      "description": "The Pink City, famous for its rich culture, forts, palaces, and traditional bazaars.",
+      "attractions": [
+        "Amber Fort",
+        "City Palace",
+        "Hawa Mahal",
+        "Jantar Mantar",
+        "Johari Bazaar"
+      ],
+      "activities": [
+        "Sightseeing",
+        "Shopping",
+        "Cultural shows",
+        "Elephant rides",
+        "Heritage walks"
+      ],
+      "average_budget_per_day": 2000
+    },
+    {
+      "city": "Paris",
+      "country": "France",
+      "description": "The City of Light, celebrated for its art, fashion, gastronomy, and culture.",
+      "attractions": [
+        "Eiffel Tower",
+        "Louvre Museum",
+        "Notre-Dame Cathedral",
+        "Champs-Élysées",
+        "Montmartre"
+      ],
+      "activities": [
+        "Museum visits",
+        "Cafe hopping",
+        "Luxury shopping",
+        "Seine river cruise",
+        "Art tours"
+      ],
+      "average_budget_per_day": 8000
+    },
+    {
+      "city": "Tokyo",
+      "country": "Japan",
+      "description": "A dazzling city blending traditional culture and futuristic tech.",
+      "attractions": [
+        "Tokyo Tower",
+        "Senso-ji Temple",
+        "Shinjuku Gyoen",
+        "Akihabara",
+        "Meiji Shrine"
+      ],
+      "activities": [
+        "Anime tours",
+        "Sushi tasting",
+        "Temple visits",
+        "Shopping in Harajuku",
+        "Cherry blossom viewing"
+      ],
+      "average_budget_per_day": 9000
+    },
+    {
+      "city": "New York City",
+      "country": "USA",
+      "description": "The city that never sleeps, home to iconic landmarks and endless entertainment.",
+      "attractions": [
+        "Statue of Liberty",
+        "Central Park",
+        "Times Square",
+        "Empire State Building",
+        "Metropolitan Museum of Art"
+      ],
+      "activities": [
+        "Broadway shows",
+        "Shopping on Fifth Avenue",
+        "Central Park biking",
+        "Museum tours",
+        "Skyline viewing"
+      ],
+      "average_budget_per_day": 10000
+    }
+  ]
+  
