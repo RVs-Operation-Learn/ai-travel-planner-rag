@@ -1,34 +1,9 @@
-import chromadb
-from sentence_transformers import SentenceTransformer
+from langchain.vectorstores import Chroma
+from langchain.embeddings import HuggingFaceEmbeddings
 
-# Initialize client
-chroma_client = chromadb.PersistentClient(path="./chroma_db")
+embedding_model = HuggingFaceEmbeddings(model_name="sentence-transformers/all-MiniLM-L6-v2")
+db = Chroma(persist_directory="./vectorstore", embedding_function=embedding_model)
 
-# Load embedding model
-embedder = SentenceTransformer('all-MiniLM-L6-v2')
-
-# Get collection
-collection = chroma_client.get_or_create_collection(name="travel_info")
-
-def retrieve_travel_info(query: str, top_k: int = 5, city: str = None):
-    """
-    Given a user query, retrieve top_k relevant travel information,
-    optionally filter by city.
-    """
-    # Embed the query
-    query_embedding = embedder.encode(query).tolist()
-
-    # Query ChromaDB
-    results = collection.query(
-        query_embeddings=[query_embedding],
-        n_results=top_k,
-        include=["documents", "metadatas"]
-    )
-
-    documents = results["documents"][0] if results["documents"] else []
-
-    # Optional: filter by city keyword
-    if city:
-        documents = [doc for doc in documents if city.lower() in doc.lower()]
-
-    return documents
+def retrieve_travel_info(query, city):
+    # Filter by metadata city
+    return db.similarity_search(query, k=3, filter={"city": city})

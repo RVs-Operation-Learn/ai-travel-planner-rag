@@ -1,43 +1,32 @@
+from langchain.vectorstores import Chroma
+from langchain.embeddings import HuggingFaceEmbeddings
+from langchain.text_splitter import RecursiveCharacterTextSplitter
+from langchain.docstore.document import Document
 import json
-import chromadb
-from sentence_transformers import SentenceTransformer
-
-# Initialize ChromaDB client
-chroma_client = chromadb.PersistentClient(path="./chroma_db")
-
-# Create or get collection
-collection = chroma_client.get_or_create_collection(name="travel_info")
+import os
 
 # Load knowledge base
 with open("./data/knowledge_base.json", "r", encoding="utf-8") as f:
-    knowledge_base = json.load(f)
+    knowledge_data = json.load(f)
 
-# Load embedding model (local HuggingFace model)
-embedder = SentenceTransformer('all-MiniLM-L6-v2')
+# Initialize embedding model
+embedding_model = HuggingFaceEmbeddings(model_name="sentence-transformers/all-MiniLM-L6-v2")
 
-# Prepare data for insertion
-documents = []
-ids = []
-metadatas = []
+# Split and tag data
+text_splitter = RecursiveCharacterTextSplitter(chunk_size=300, chunk_overlap=30)
+docs = []
 
-for idx, item in enumerate(knowledge_base):
-    city = item["city"]
-    info = item["info"]
-    embedding = embedder.encode(info).tolist()
-    
-    documents.append(info)
-    ids.append(str(idx))  # IDs must be strings
-    metadatas.append({"city": city})
+for item in knowledge_data:
+    chunks = text_splitter.split_text(item["info"])
+    for chunk in chunks:
+        doc = Document(page_content=chunk, metadata={"city": item["city"]})
+        docs.append(doc)
 
-# Insert into ChromaDB
-collection.add(
-    documents=documents,
-    embeddings=[embedder.encode(doc).tolist() for doc in documents],
-    metadatas=metadatas,
-    ids=ids
-)
+# Save to Chroma DB
+if os.path.exists("./vectorstore"):
+    import shutil
+    shutil.rmtree("./vectorstore")
 
-# Save to disk
-# chroma_client.persist()
-
-print("✅ Vector store created and saved!")
+db = Chroma.from_documents(docs, embedding_model, persist_directory="./vectorstore")
+db.persist()
+print("✅ Vector store created and persisted.")

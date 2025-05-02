@@ -1,70 +1,67 @@
-from fastapi import FastAPI, HTTPException
+import os
+from fastapi import FastAPI, Request
+from fastapi.middleware.cors import CORSMiddleware
+from starlette.middleware.sessions import SessionMiddleware
 from pydantic import BaseModel
-from retriever import retrieve_travel_info  # Import the retrieve function
+from dotenv import load_dotenv
+from pathlib import Path
+from retriever import retrieve_travel_info
+from chat import generate_answer
+import logging
+
+# Load environment variables
+load_dotenv(dotenv_path=Path(__file__).resolve().parent.parent / ".env")
+openai_key = os.getenv("OPENAI_API_KEY")
 
 app = FastAPI()
 
-# Pydantic model to validate the input request data (query and city)
-class TravelRequest(BaseModel):
+# Allow frontend to call the backend
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # adjust for production
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+# Add session middleware for question limit tracking
+app.add_middleware(SessionMiddleware, secret_key=openai_key)
+
+# --- Models ---
+
+class PlanRequest(BaseModel):
+    city: str
+    budget: int
+
+class ChatRequest(BaseModel):
     query: str
     city: str
 
-# Simple session to hold conversation state (just a demo)
-class ChatSession:
-    def __init__(self):
-        self.history = []
+# --- Endpoints ---
 
-    def add_message(self, message: str):
-        self.history.append(message)
+@app.post("/plan")
+async def plan_trip(plan_request: PlanRequest):
+    city = plan_request.city
+    budget = plan_request.budget
 
-    def get_history(self):
-        return " ".join(self.history)
+    print(f"Received city: {city}, budget: {budget}")
+    query = f"Things to do in {city}"
 
-# Initialize chat session
-chat_sessions = {}
-
-@app.get("/")
-def read_root():
-    return {"message": "Welcome to the AI Travel Planner!"}
-
-@app.post("/retrieve_travel_info")
-def get_travel_info(request: TravelRequest):
-    """
-    Accepts a query and city, returns top-k relevant travel info for that city.
-    """
-    try:
-        results = retrieve_travel_info(request.query, city=request.city)
-        if not results:
-            raise HTTPException(status_code=404, detail="No results found.")
-        return {"city": request.city, "results": results}
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+    info = retrieve_travel_info(query, city)
+    return {
+        "plan": f"Here's your travel plan for {city} with a budget of ₹{budget}:\n\n{info}"
+    } if info else {"plan": "Sorry, we couldn't find information for that city."}
 
 @app.post("/chat")
-def chat_with_bot(request: TravelRequest):
-    """
-    This is the chatbot interaction API where users can ask questions about travel.
-    """
-    try:
-        # Check if the user has a session, if not, create a new one
-        if request.city not in chat_sessions:
-            chat_sessions[request.city] = ChatSession()
+def chat(chat_request: ChatRequest, request: Request):
+    session = request.session
 
-        # Get the session for the city (context for chat)
-        session = chat_sessions[request.city]
-        
-        # Retrieve travel information based on the user's query
-        results = retrieve_travel_info(request.query, city=request.city)
-        
-        # Add user query and bot response to chat history
-        session.add_message(f"User: {request.query}")
-        session.add_message(f"Bot: {', '.join(results)}")
+    if "chat_count" not in session:
+        session["chat_count"] = 0
 
-        # Limit to 3 questions for the demo
-        if len(session.history) // 2 >= 3:  # Each interaction (user + bot) takes two entries in history
-            return {"message": "Thanks for chatting! Your session has ended."}
+    if session["chat_count"] >= 3:
+        return {"message": "Limit reached. Only 3 questions allowed."}
 
-        return {"session_history": session.get_history(), "results": results}
-    
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+    session["chat_count"] += 1
+    answer = generate_answer(chat_request.query, chat_request.city)
+    return {"results": answer}
